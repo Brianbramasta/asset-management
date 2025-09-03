@@ -1,57 +1,25 @@
-name: Deploy to VPS (PM2)
+name: Simple VPS Deploy
 
 on:
   push:
-    branches: [ "main" ]   # ubah ke "master" kalau branchmu master
-
-concurrency:
-  group: deploy-to-vps
-  cancel-in-progress: true
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      # Setup SSH agent dengan private key dari Secrets
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      # Kirim kode ke VPS (tanpa node_modules/.git/.next)
-      - name: Upload project to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          source: |
-            ./*
-            !node_modules/**
-            !.git/**
-            !.next/**
-          target: ${{ secrets.VPS_PATH }}
-          overwrite: true
-          strip_components: 0
-
-      # Jalankan perintah deploy di VPS
-      - name: Deploy on VPS (install, build, restart PM2)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          script: |
-            set -e
-            cd ${{ secrets.VPS_PATH }}
-            # install dependencies bersih
-            npm ci
-            # build Next.js
-            npm run build
-            # start/restart PM2
-            pm2 describe asset-management > /dev/null 2>&1 \
-              && pm2 restart asset-management \
-              || pm2 start npm --name "asset-management" -- start
-            pm2 save
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: 22
+        script: |
+          cd /asset-management
+          git pull origin main
+          npm install
+          npm run db:generate
+          npm run build
+          pm2 restart asset-management

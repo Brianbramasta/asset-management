@@ -1,0 +1,345 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                   String         @id @default(cuid())
+  email                String         @unique
+  username             String         @unique
+  password             String
+  firstName            String
+  lastName             String
+  role                 Role           @default(USER)
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  lastLogin            DateTime?
+  department           String?
+  position             UserPosition?
+  updatedAssets        Asset[]        @relation("AssetUpdatedBy")
+  createdAssets        Asset[]        @relation("AssetCreatedBy")
+  auditLogs            AuditLog[]
+  updatedDigitalAssets DigitalAsset[] @relation("DigitalAssetUpdatedBy")
+  createdDigitalAssets DigitalAsset[] @relation("DigitalAssetCreatedBy")
+  updatedDocuments     Document[]     @relation("DocumentUpdatedBy")
+  createdDocuments     Document[]     @relation("DocumentCreatedBy")
+
+  @@map("users")
+}
+
+model Asset {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  category      String
+  subcategory   String?
+  brand         String?
+  model         String?
+  serialNumber  String?        @unique
+  purchaseDate  DateTime?
+  purchasePrice Float?
+  currentValue  Float?
+  condition     AssetCondition @default(GOOD)
+  location      String
+  department    String?
+  assignedTo    String?
+  warrantyUntil DateTime?
+  notes         String?
+  tags          String?
+  barcode       String?        @unique
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdById   String
+  updatedById   String
+  audits        AssetAudit[]
+  updatedBy     User           @relation("AssetUpdatedBy", fields: [updatedById], references: [id])
+  createdBy     User           @relation("AssetCreatedBy", fields: [createdById], references: [id])
+  maintenances  Maintenance[]
+
+  @@map("assets")
+}
+
+model Maintenance {
+  id            String            @id @default(cuid())
+  assetId       String
+  type          MaintenanceType
+  description   String
+  scheduledDate DateTime
+  completedDate DateTime?
+  cost          Float?
+  vendor        String?
+  notes         String?
+  status        MaintenanceStatus @default(SCHEDULED)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  asset         Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@map("maintenances")
+}
+
+model AssetAudit {
+  id        String         @id @default(cuid())
+  assetId   String
+  auditDate DateTime       @default(now())
+  condition AssetCondition
+  location  String
+  notes     String?
+  auditorId String?
+  createdAt DateTime       @default(now())
+  asset     Asset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@map("asset_audits")
+}
+
+model Document {
+  id          String             @id @default(cuid())
+  title       String
+  description String?
+  category    DocumentCategory
+  subcategory String?
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  version     String             @default("1.0")
+  tags        String?
+  isActive    Boolean            @default(true)
+  expiryDate  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  createdById String
+  updatedById String
+  department  String?
+  watermark   String?
+  approvals   DocumentApproval[]
+  revisions   DocumentRevision[]
+  updatedBy   User               @relation("DocumentUpdatedBy", fields: [updatedById], references: [id])
+  createdBy   User               @relation("DocumentCreatedBy", fields: [createdById], references: [id])
+
+  @@map("documents")
+}
+
+model DocumentApproval {
+  id         String         @id @default(cuid())
+  documentId String
+  approverId String
+  status     ApprovalStatus @default(PENDING)
+  comments   String?
+  approvedAt DateTime?
+  createdAt  DateTime       @default(now())
+  document   Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_approvals")
+}
+
+model DocumentRevision {
+  id         String   @id @default(cuid())
+  documentId String
+  version    String
+  changes    String
+  filePath   String
+  createdBy  String
+  createdAt  DateTime @default(now())
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_revisions")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String
+  resource   String
+  resourceId String?
+  oldValues  String?
+  newValues  String?
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model Category {
+  id          String       @id @default(cuid())
+  name        String
+  type        CategoryType
+  description String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdById String
+
+  @@unique([name, type])
+  @@map("categories")
+}
+
+model WatermarkConfig {
+  id          String   @id @default(cuid())
+  department  String   @unique
+  text        String
+  opacity     Float    @default(0.3)
+  position    String   @default("center")
+  fontSize    Int      @default(12)
+  color       String   @default("#888888")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+
+  @@map("watermark_configs")
+}
+
+model DigitalAsset {
+  id              String            @id @default(cuid())
+  contentName     String
+  description     String?
+  aspectRatio     DigitalAssetRatio
+  googleDriveLink String?
+  previewFile     String?
+  previewFileName String?
+  previewFileSize Int?
+  tags            String?
+  department      String?
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  createdById     String
+  updatedById     String
+  updatedBy       User              @relation("DigitalAssetUpdatedBy", fields: [updatedById], references: [id])
+  createdBy       User              @relation("DigitalAssetCreatedBy", fields: [createdById], references: [id])
+
+  @@map("digital_assets")
+}
+
+model ArchiveReport {
+  id          String        @id @default(cuid())
+  documentId  String
+  department  String
+  action      ArchiveAction
+  performedBy String
+  reason      String?
+  notes       String?
+  timestamp   DateTime      @default(now())
+
+  @@map("archive_reports")
+}
+
+model DepartmentPermission {
+  id               String     @id @default(cuid())
+  department       String
+  module           SystemModule
+  canRead          Boolean    @default(false)
+  canWrite         Boolean    @default(false)
+  canDelete        Boolean    @default(false)
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  createdById      String
+
+  @@unique([department, module])
+  @@map("department_permissions")
+}
+
+enum Role {
+  ADMIN
+  USER
+  VIEWER
+}
+
+enum UserPosition {
+  MANAGER
+  STAFF
+}
+
+enum AssetCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+  DISPOSED
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  PREDICTIVE
+  EMERGENCY
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum DocumentCategory {
+  POLICY
+  PROCEDURE
+  WORK_INSTRUCTION
+  FORM
+  RECORD
+  MANUAL
+  CERTIFICATE
+  CONTRACT
+  CORRESPONDENCE
+  OTHER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum CategoryType {
+  ASSET
+  DOCUMENT
+  DEPARTMENT
+}
+
+enum DigitalAssetRatio {
+  RATIO_4_3
+  RATIO_9_16
+}
+
+enum ArchiveAction {
+  IN
+  OUT
+  UPDATED
+  DELETED
+  VIEWED
+  SHARED
+}
+
+enum SystemModule {
+  ASSETS
+  DOCUMENTS
+  DIGITAL_ASSETS
+  USERS
+  AUDIT_LOGS
+  REPORTS
+  SETTINGS
+}

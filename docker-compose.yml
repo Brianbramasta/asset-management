@@ -1,0 +1,23 @@
+services:
+  asset-management:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-nextauth-secret-here
+      - JWT_SECRET=your-jwt-secret-here
+      - DATABASE_URL=file:./prisma/dev.db
+      - MAILTRAP_API_TOKEN=your-mailtrap-api-token
+      - MAILTRAP_HOST=send.api.mailtrap.io
+      - MAILTRAP_FROM_EMAIL=noreply@example.com
+      - MAILTRAP_FROM_NAME=ManajemenAset System
+    volumes:
+      - ./prisma/dev.db:/app/prisma/dev.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

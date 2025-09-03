@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/* Custom Color Palette */
+:root {
+  --color-primary: #187F7E;
+  --color-secondary: #00AAA8;
+  --color-accent: #0EB6B4;
+  --color-background: #E8E8E8;
+  --color-highlight: #D4AF37;
+  --color-primary-hover: #00AAA8;
+  --color-accent-light: rgba(14, 182, 180, 0.1);
+  --color-secondary-light: rgba(0, 170, 168, 0.1);
+  --color-highlight-light: rgba(212, 175, 55, 0.1);
+}
+
+/* Force light mode - override system dark mode preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light;
+  }
+  
+  body {
+    background-color: #fafafa !important;
+    color: #0f172a !important;
+  }
+  
+  /* Override any dark mode styles */
+  .dark\:border-slate-800,
+  .dark\:bg-slate-950,
+  .dark\:text-slate-50 {
+    border-color: #e5e7eb !important;
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-background);
+  color: #0f172a;
+  line-height: 1.6;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* Loading animation */
+.loading-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Brand Color Utilities */
+.bg-brand-primary {
+  background-color: var(--color-primary);
+}
+
+.bg-brand-secondary {
+  background-color: var(--color-secondary);
+}
+
+.bg-brand-accent {
+  background-color: var(--color-accent);
+}
+
+.bg-brand-highlight {
+  background-color: var(--color-highlight);
+}
+
+.text-brand-primary {
+  color: var(--color-primary);
+}
+
+.text-brand-secondary {
+  color: var(--color-secondary);
+}
+
+.text-brand-accent {
+  color: var(--color-accent);
+}
+
+.text-brand-highlight {
+  color: var(--color-highlight);
+}
+
+.border-brand-primary {
+  border-color: var(--color-primary);
+}
+
+.hover\:bg-brand-primary-light:hover {
+  background-color: var(--color-accent-light);
+}
+
+.hover\:bg-brand-secondary-light:hover {
+  background-color: var(--color-secondary-light);
+}
+
+.hover\:bg-brand-highlight-light:hover {
+  background-color: var(--color-highlight-light);
+}
